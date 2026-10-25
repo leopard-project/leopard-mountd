@@ -1,11 +1,11 @@
 #include "xtuiapi.h"
 
-/* leopard-mountd：读 /system/etc/leopard/fstab，逐个挂载文件系统。
+/* leopard-mountd：读 /system/config/fstab，逐个挂载文件系统。
  * fstab 格式：<device> <mountpoint> [fstype]，# 开头为注释。
  * 挂载点目录不存在会先 mkdir；mount 走 SYS_MOUNT(165) 原语。
  */
 
-#define FSTAB_PATH "/system/etc/leopard/fstab"
+#define FSTAB_PATH "/system/config/fstab"
 #define BUF_CAP    (16 * 1024)
 
 int main(int argc, char *argv[], char *envp[])

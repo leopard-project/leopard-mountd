@@ -1,6 +1,6 @@
 # leopard-mountd
 
-挂载守护进程：读 `/system/etc/leopard/fstab`，逐行挂载文件系统。
+挂载守护进程：读 `/system/config/fstab`，逐行挂载文件系统。
 
 ## fstab 格式
 ```
