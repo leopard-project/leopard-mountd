@@ -4,7 +4,10 @@
 
 ## fstab 格式
     # <device> <mountpoint> [fstype]
-    /dev/sda2 /apps vfat
+    /dev/sata0p1 /apps fatfs
+    /dev/sata0p2 /users fatfs
+
+fstype 缺省 `fatfs`；写 `vfat` 会 -EINVAL（内核按名字精确 strcmp 匹配文件系统）。
 
 ## 构建
     python3 gen_ninja.py && ninja build   # → out/leopard-mountd.elf

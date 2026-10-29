@@ -51,7 +51,7 @@ int main(int argc, char *argv[], char *envp[])
                         line = nl + 1;
                         continue;
                 }
-                if (fstype == NULL) fstype = (char *)"vfat";
+                if (fstype == NULL) fstype = (char *)"fatfs"; /* 内核 get_filesystem 精确匹配 fatfs */
 
                 /* 确保挂载点目录存在 */
                 xapi_Mkdir((WSTR)target);
