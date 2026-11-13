@@ -19,7 +19,7 @@ int main(int argc, char *argv[], char *envp[])
 
         XFILE *fp = xapi_OpenFile((WSTR)FSTAB_PATH);
         if (fp == NULL) {
-                xapi_Printf("mountd: no fstab at %s\n", FSTAB_PATH);
+                xapi_Printf("[mountd]: no fstab at %s\n", FSTAB_PATH);
                 return 0;
         }
         uint64_t len = fp->length;
@@ -51,7 +51,8 @@ int main(int argc, char *argv[], char *envp[])
                         line = nl + 1;
                         continue;
                 }
-                if (fstype == NULL) fstype = (char *)"fatfs"; /* 内核 get_filesystem 精确匹配 fatfs */
+                /* 内核 get_filesystem 精确匹配 fatfs */
+                if (fstype == NULL) fstype = (char *)"fatfs";
 
                 /* 确保挂载点目录存在 */
                 xapi_Mkdir((WSTR)target);
@@ -59,16 +60,16 @@ int main(int argc, char *argv[], char *envp[])
                 int64_t r = (int64_t)enter_syscall(SYS_MOUNT, (uint64_t)device, (uint64_t)target,
                                                    (uint64_t)fstype, 0, 0, 0);
                 if (r == 0) {
-                        xapi_Printf("mountd: %s -> %s (%s) ok\n", device, target, fstype);
+                        xapi_Printf("[mountd]: %s -> %s (%s) ok\n", device, target, fstype);
                         mounted++;
                 } else {
-                        xapi_Printf("mountd: %s -> %s failed (ret=%d)\n", device, target, (int)r);
+                        xapi_Printf("[mountd]: %s -> %s failed (ret=%d)\n", device, target, (int)r);
                 }
 
                 if (!nl) break;
                 line = nl + 1;
         }
 
-        xapi_Printf("mountd: %d filesystem(s) mounted\n", mounted);
+        xapi_Printf("[mountd]: %d filesystem(s) mounted\n", mounted);
         return 0;
 }
