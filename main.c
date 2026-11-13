@@ -8,6 +8,24 @@
 #define FSTAB_PATH "/system/config/fstab"
 #define BUF_CAP    (16 * 1024)
 
+/* 逐级创建挂载点（xapi_Mkdir 不建父目录）。 */
+static void mkdir_p(const char *path)
+{
+        char buf[256];
+        size_t len = strlen(path);
+
+        if (len == 0 || len >= sizeof(buf)) return;
+        memcpy(buf, path, len + 1);
+        for (size_t i = 1; i <= len; i++) {
+                if (buf[i] != '/' && buf[i] != '\0') continue;
+                char saved = buf[i];
+
+                buf[i] = '\0';
+                xapi_Mkdir((WSTR)buf);
+                buf[i] = saved;
+        }
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
         (void)argc;
@@ -43,6 +61,9 @@ int main(int argc, char *argv[], char *envp[])
                         continue;
                 }
 
+                char *comment = strchr(p, '#');
+                if (comment != NULL) *comment = '\0';
+
                 char *device = strtok(p, " \t\r");
                 char *target = strtok(NULL, " \t\r");
                 char *fstype = strtok(NULL, " \t\r");
@@ -51,11 +72,19 @@ int main(int argc, char *argv[], char *envp[])
                         line = nl + 1;
                         continue;
                 }
-                /* 内核 get_filesystem 精确匹配 fatfs */
+                /* fstab 第三列原样交给内核（fatfs / ext4 / ...）。
+                 * 缺省仍按老格式回退 fatfs。 */
                 if (fstype == NULL) fstype = (char *)"fatfs";
 
-                /* 确保挂载点目录存在 */
-                xapi_Mkdir((WSTR)target);
+                if (strcmp(target, "/") == 0) {
+                        xapi_Printf("[mountd]: skip root entry (already mounted by kernel)\n");
+                        if (!nl) break;
+                        line = nl + 1;
+                        continue;
+                }
+
+                /* 确保挂载点目录存在（含父目录） */
+                mkdir_p(target);
 
                 int64_t r = (int64_t)enter_syscall(SYS_MOUNT, (uint64_t)device, (uint64_t)target,
                                                    (uint64_t)fstype, 0, 0, 0);
