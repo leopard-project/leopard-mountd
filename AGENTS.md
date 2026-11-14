@@ -13,4 +13,4 @@ fstype 缺省 `fatfs`；写 `vfat` 会 -EINVAL（内核按名字精确 strcmp �
     python3 gen_ninja.py && ninja build   # → out/leopard-mountd.elf
     ninja pack
 
-- 静态 ELF，依赖 `../XJ380-SDK`（`src/include` + `obj-tui`）。
+- 静态 ELF，依赖 `../XACT-CRT`（`include/` + `lib/x86_64/`）。
