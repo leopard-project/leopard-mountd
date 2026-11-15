@@ -1,4 +1,6 @@
 #include "xtuiapi.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 /* leopard-mountd：读 /system/config/fstab，逐个挂载文件系统。
  * fstab 格式：<device> <mountpoint> [fstype]，# 开头为注释。
@@ -26,6 +28,21 @@ static void mkdir_p(const char *path)
         }
 }
 
+static void mountd_log(const char *format, ...)
+{
+        char    buffer[256];
+        va_list args;
+        int     length;
+
+        va_start(args, format);
+        length = vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+        if (length > 0) {
+                if ((size_t)length > sizeof(buffer) - 1) length = (int)sizeof(buffer) - 1;
+                xapi_OutputSerial((WSTR)buffer);
+        }
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
         (void)argc;
@@ -37,7 +54,7 @@ int main(int argc, char *argv[], char *envp[])
 
         XFILE *fp = xapi_OpenFile((WSTR)FSTAB_PATH);
         if (fp == NULL) {
-                xapi_Printf("[mountd]: no fstab at %s\n", FSTAB_PATH);
+                mountd_log("[mountd]: no fstab at %s\n", FSTAB_PATH);
                 return 0;
         }
         uint64_t len = fp->length;
@@ -77,7 +94,7 @@ int main(int argc, char *argv[], char *envp[])
                 if (fstype == NULL) fstype = (char *)"fatfs";
 
                 if (strcmp(target, "/") == 0) {
-                        xapi_Printf("[mountd]: skip root entry (already mounted by kernel)\n");
+                        mountd_log("[mountd]: skip root entry (already mounted by kernel)\n");
                         if (!nl) break;
                         line = nl + 1;
                         continue;
@@ -89,16 +106,16 @@ int main(int argc, char *argv[], char *envp[])
                 int64_t r = (int64_t)enter_syscall(SYS_MOUNT, (uint64_t)device, (uint64_t)target,
                                                    (uint64_t)fstype, 0, 0, 0);
                 if (r == 0) {
-                        xapi_Printf("[mountd]: %s -> %s (%s) ok\n", device, target, fstype);
+                        mountd_log("[mountd]: %s -> %s (%s) ok\n", device, target, fstype);
                         mounted++;
                 } else {
-                        xapi_Printf("[mountd]: %s -> %s failed (ret=%d)\n", device, target, (int)r);
+                        mountd_log("[mountd]: %s -> %s failed (ret=%d)\n", device, target, (int)r);
                 }
 
                 if (!nl) break;
                 line = nl + 1;
         }
 
-        xapi_Printf("[mountd]: %d filesystem(s) mounted\n", mounted);
+        mountd_log("[mountd]: %d filesystem(s) mounted\n", mounted);
         return 0;
 }
