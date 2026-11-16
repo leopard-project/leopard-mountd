@@ -2,15 +2,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-/* leopard-mountd：读 /system/config/fstab，逐个挂载文件系统。
- * fstab 格式：<device> <mountpoint> [fstype]，# 开头为注释。
- * 挂载点目录不存在会先 mkdir；mount 走 SYS_MOUNT(165) 原语。
+/* leopard-mountd: reads /system/config/fstab and mounts filesystems one by one.
+ * fstab format: <device> <mountpoint> [fstype]; lines starting with # are comments.
+ * Missing mount point directories are created first; mount uses the SYS_MOUNT(165) primitive.
  */
 
 #define FSTAB_PATH "/system/config/fstab"
 #define BUF_CAP    (16 * 1024)
 
-/* 逐级创建挂载点（xapi_Mkdir 不建父目录）。 */
+/* Create mount points level by level (xapi_Mkdir does not create parent directories). */
 static void mkdir_p(const char *path)
 {
         char buf[256];
@@ -89,8 +89,8 @@ int main(int argc, char *argv[], char *envp[])
                         line = nl + 1;
                         continue;
                 }
-                /* fstab 第三列原样交给内核（fatfs / ext4 / ...）。
-                 * 缺省仍按老格式回退 fatfs。 */
+                /* The third fstab column is passed to the kernel as-is (fatfs / ext4 / ...).
+                 * If missing, still fall back to fatfs for the old format. */
                 if (fstype == NULL) fstype = (char *)"fatfs";
 
                 if (strcmp(target, "/") == 0) {
@@ -100,7 +100,7 @@ int main(int argc, char *argv[], char *envp[])
                         continue;
                 }
 
-                /* 确保挂载点目录存在（含父目录） */
+                /* Ensure the mount point directory exists (including parents) */
                 mkdir_p(target);
 
                 int64_t r = (int64_t)enter_syscall(SYS_MOUNT, (uint64_t)device, (uint64_t)target,
